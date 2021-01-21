@@ -14,6 +14,15 @@ const FirebaseStore = () => {
     const [name, setName] = useState('');
     const [fee, setFee] = useState('Have a nice day!');
 
+    // the customer query.
+    const docRef = db.collection('users')
+    const query = docRef.where('name', '==', name);
+
+    // query.onSnapshot(doc => {
+    //     const source = doc.metadata.hasPendingWrites ? 'Local' : 'Server';
+    //     console.log(source, 'data: ', doc.data());
+    // })
+
     // TODO realtime calculation
     const getFeildData = async () => {
         const snapshot = await db.collection('users').get();
@@ -38,11 +47,6 @@ const FirebaseStore = () => {
 
         return <p>{totalMinutes}</p>
     }
-
-    // the customer query.
-    const docRef = db.collection('users')
-    const query = docRef.where('name', '==', name);
-
 
     //  Submit customer's spending time on database.
     const setData = async () => {
@@ -118,14 +122,14 @@ const FirebaseStore = () => {
             if (res >= 0) {
                 return setFee(`残り時間は ${res}分です`);
             } else if (res <= -1, res >= -15) {
-                return console.log(`${res}分過ぎています。 料金は${charge}円です。`);
+                return setFee(`${res}分過ぎています。 料金は${charge}円です。`);
             } else if (res <= -16, res >= -30) {
-                return console.log(`${res}分過ぎています。 料金は${charge * 2}円です。`);
+                return setFee(`${res}分過ぎています。 料金は${charge * 2}円です。`);
             } else if (res <= -31, res >= -45) {
-                return console.log(`${res}分過ぎています。 料金は${charge * 3}円です。`);
+                return setFee(`${res}分過ぎています。 料金は${charge * 3}円です。`);
             } else if (res <= -46, res >= -60) {
-                return console.log(`${res}分過ぎています。 料金は${charge * 4}円です。`);
-            } else console.log(`${res}分の超過料金の計算をお願いします。`);
+                return setFee(`${res}分過ぎています。 料金は${charge * 4}円です。`);
+            } else setFee(`${res}分の超過料金の計算をお願いします。`);
         })
     }
 
@@ -178,7 +182,6 @@ const FirebaseStore = () => {
             </select>
             <br />
             {totalTime(hour, minute)}
-            {/* <button onClick={() => { check(hour, minute) }}>Check</button> */}
             <button onClick={() => { calc() }}>Calc</button>
             <button onClick={setData}>ADD</button>
             <button onClick={resetData}>clear</button>
