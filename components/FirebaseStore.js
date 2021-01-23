@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'firebase/firestore'
 import firebase from 'firebase/app'
 import initFirebase from '../utils/auth/initFirebase';
@@ -13,29 +13,42 @@ const FirebaseStore = () => {
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
     const [fee, setFee] = useState('Have a nice day!');
+    const [customer, setCustomer] = useState([])
+
 
     // the customer query.
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
 
-    // query.onSnapshot(doc => {
-    //     const source = doc.metadata.hasPendingWrites ? 'Local' : 'Server';
-    //     console.log(source, 'data: ', doc.data());
-    // })
+
+    useEffect(() => {
+        docRef.onSnapshot(async (snapshot) => {
+            let userInfo = []
+            await Promise.all(snapshot.docs.map(async (doc) => {
+                let documentSnapshot = await docRef.get();
+                console.log(documentSnapshot);
+                userInfo.push({
+                    userId: doc.id,
+                    ...doc.data()
+                })
+            }))
+            setCustomer(userInfo)
+        })
+    }, [])
 
     // TODO realtime calculation
-    const getFeildData = async () => {
-        const snapshot = await db.collection('users').get();
-        const _users = [];
+    // const getFeildData = async () => {
+    //     const snapshot = await db.collection('users').get();
+    //     const _users = [];
 
-        snapshot.forEach(doc => {
-            _users.push({
-                userId: doc.id,
-                ...doc.data()
-            });
-        })
-        setUsers(_users)
-    };
+    //     snapshot.forEach(doc => {
+    //         _users.push({
+    //             userId: doc.id,
+    //             ...doc.data()
+    //         });
+    //     })
+    //     setUsers(_users)
+    // };
 
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
@@ -152,7 +165,7 @@ const FirebaseStore = () => {
         )
     }
     // Make user list
-    const members = users.map(user => {
+    const members = customer.map(user => {
         return (
             <option value={user.name}>{user.name}</option>
         )
@@ -162,9 +175,13 @@ const FirebaseStore = () => {
     // 　　　Create User interface.
     return (
         <>
-            <button onClick={getFeildData}>Field</button>
-            <ul>{userList}</ul>
-
+            {/* <button onClick={getFeildData}>Field</button> */}
+            <ul>{userList}</ul><br />
+            {customer.map((e) => {
+                return (
+                    <li>{`${e.name} : ${e.spentTime} : ${e.membership}`}</li>
+                )
+            })}
             <select name="" id=""
                 onChange={(e) => setName(e.target.value)}>
                 <option value="Hour">USER</option>
