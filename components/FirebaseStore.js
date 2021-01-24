@@ -58,7 +58,14 @@ const FirebaseStore = () => {
         //   Calculate difference between start time and end time.
         const totalMinutes = dateFrom.diff(dateTo, 'minute');
 
-        return <p>{totalMinutes}</p>
+        var hour = Math.floor(totalMinutes / 60);
+        var min = totalMinutes % 60;
+
+        if (totalMinutes < 0) {
+            return <p>滞在時間がマイナスです</p>
+
+        }
+        return <p>{`${hour} : ${min}`}</p>
     }
 
     //  Submit customer's spending time on database.
@@ -184,7 +191,7 @@ const FirebaseStore = () => {
             })}
             <select name="" id=""
                 onChange={(e) => setName(e.target.value)}>
-                <option value="Hour">USER</option>
+                <option value="Hour">VISITOR</option>
                 {members}
             </select>
             <select name="Hour" id=""
@@ -200,10 +207,10 @@ const FirebaseStore = () => {
             <br />
             {totalTime(hour, minute)}
             <button onClick={() => { calc() }}>Calc</button>
-            <button onClick={setData}>ADD</button>
-            <button onClick={resetData}>clear</button>
-            <button onClick={resetAll}>reset</button>
-            <input type="text" value={fee} />
+            <button onClick={setData}>ADD DATA</button>
+            <button onClick={resetAll}>RESET ALL</button>
+            <br />
+            {fee}
         </>
     )
 }
