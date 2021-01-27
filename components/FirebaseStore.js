@@ -14,6 +14,7 @@ const FirebaseStore = () => {
     const [name, setName] = useState('');
     const [fee, setFee] = useState('Have a nice day!');
     const [customer, setCustomer] = useState([])
+    const [optionList, setOptionList] = useState([])
 
 
     // the customer query.
@@ -25,30 +26,38 @@ const FirebaseStore = () => {
         docRef.onSnapshot(async (snapshot) => {
             let userInfo = []
             await Promise.all(snapshot.docs.map(async (doc) => {
-                let documentSnapshot = await docRef.get();
-                console.log(documentSnapshot);
                 userInfo.push({
                     userId: doc.id,
                     ...doc.data()
                 })
             }))
-            setCustomer(userInfo)
+            setOptionList(userInfo)
         })
     }, [])
 
-    // TODO realtime calculation
-    // const getFeildData = async () => {
-    //     const snapshot = await db.collection('users').get();
-    //     const _users = [];
+    docRef.where('name', '==', name).onSnapshot(async (snapshot) => {
+        let userInfo = []
+        await Promise.all(snapshot.docs.map(async (doc) => {
+            userInfo.push({
+                userId: doc.id,
+                ...doc.data()
+            })
+        }))
+        setUsers(userInfo)
+    })
 
-    //     snapshot.forEach(doc => {
-    //         _users.push({
-    //             userId: doc.id,
-    //             ...doc.data()
-    //         });
-    //     })
-    //     setUsers(_users)
-    // };
+    const getFeildData = async () => {
+        const snapshot = await db.collection('users').get();
+        const _users = [];
+
+        snapshot.forEach(doc => {
+            _users.push({
+                userId: doc.id,
+                ...doc.data()
+            });
+        })
+        setCustomer(_users)
+    };
 
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
@@ -153,8 +162,14 @@ const FirebaseStore = () => {
         })
     }
 
-    // Create all user status. 
+    // Create selected user status. 
     const userList = users.map(user => {
+        return (
+            <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
+        )
+    })
+    // Create ALL user status. 
+    const allUserList = customer.map(user => {
         return (
             <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
         )
@@ -172,7 +187,7 @@ const FirebaseStore = () => {
         )
     }
     // Make user list
-    const members = customer.map(user => {
+    const members = optionList.map(user => {
         return (
             <option value={user.name}>{user.name}</option>
         )
@@ -182,18 +197,15 @@ const FirebaseStore = () => {
     // 　　　Create User interface.
     return (
         <>
-            {/* <button onClick={getFeildData}>Field</button> */}
+
             <ul>{userList}</ul><br />
-            {customer.map((e) => {
-                return (
-                    <li>{`${e.name} : ${e.spentTime} : ${e.membership}`}</li>
-                )
-            })}
             <select name="" id=""
                 onChange={(e) => setName(e.target.value)}>
-                <option value="Hour">VISITOR</option>
+                <option value="Hour">Choose Customer</option>
                 {members}
             </select>
+            <br />
+            <br />
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
                 <option value="Hour">HOUR</option>
@@ -205,12 +217,14 @@ const FirebaseStore = () => {
                 {list(59)}
             </select>
             <br />
-            {totalTime(hour, minute)}
+            <p>Total time is {totalTime(hour, minute)}</p>
             <button onClick={() => { calc() }}>Calc</button>
             <button onClick={setData}>ADD DATA</button>
             <button onClick={resetAll}>RESET ALL</button>
+            <button onClick={getFeildData}>Display ALL</button>
             <br />
             {fee}
+            <ul>{allUserList}</ul>
         </>
     )
 }
