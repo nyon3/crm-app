@@ -8,13 +8,12 @@ initFirebase()
 const db = firebase.firestore();
 
 const FirebaseStore = () => {
-    const [users, setUsers] = useState([]);
+    const [setRealTimeUser, setRealTimeUserInfo] = useState([]);
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
     const [fee, setFee] = useState('Have a nice day!');
     const [customer, setCustomer] = useState([])
-    const [optionList, setOptionList] = useState([])
 
 
     // the customer query.
@@ -31,20 +30,20 @@ const FirebaseStore = () => {
                     ...doc.data()
                 })
             }))
-            setOptionList(userInfo)
+            setRealTimeUserInfo(userInfo)
         })
     }, [])
 
-    docRef.where('name', '==', name).onSnapshot(async (snapshot) => {
-        let userInfo = []
-        await Promise.all(snapshot.docs.map(async (doc) => {
-            userInfo.push({
-                userId: doc.id,
-                ...doc.data()
-            })
-        }))
-        setUsers(userInfo)
-    })
+    // docRef.where('name', '==', name).onSnapshot(async (snapshot) => {
+    //     let userInfo = []
+    //     await Promise.all(snapshot.docs.map(async (doc) => {
+    //         userInfo.push({
+    //             userId: doc.id,
+    //             ...doc.data()
+    //         })
+    //     }))
+    //     setRealTimeUserInfo(userInfo)
+    // })
 
     const getFeildData = async () => {
         const snapshot = await db.collection('users').get();
@@ -84,6 +83,7 @@ const FirebaseStore = () => {
                 // Current time.
                 const dateFrom = dayjs();
                 // End time.
+                // TODO 四捨五入を導入！
                 const dateTo = dayjs().hour(arrivedHour).minute(arrivedMinute);
                 //   Calculate difference between start time and end time.
                 res(dateFrom.diff(dateTo, 'minute'))
@@ -100,15 +100,6 @@ const FirebaseStore = () => {
         })
     };
 
-    // reset individual customer's spending time on database.
-    const resetData = async () => {
-        query.get().then(snapshots => {
-            snapshots.forEach(snapshot => {
-                console.log(snapshot.id, "=>", snapshot.data());
-                docRef.doc(snapshot.id).update({ spentTime: 0 })
-            });
-        }).then(() => console.log('clear record')).catch((err) => console.log(err))
-    };
     // reset all customer's spending time on database.
     const resetAll = async () => {
         docRef.get().then(querySnapshot => {
@@ -162,12 +153,7 @@ const FirebaseStore = () => {
         })
     }
 
-    // Create selected user status. 
-    const userList = users.map(user => {
-        return (
-            <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
-        )
-    })
+
     // Create ALL user status. 
     const allUserList = customer.map(user => {
         return (
@@ -186,11 +172,18 @@ const FirebaseStore = () => {
             })
         )
     }
-    // Make user list
-    const members = optionList.map(user => {
+    // Make user list for option 
+    const members = setRealTimeUser.map(user => {
         return (
             <option value={user.name}>{user.name}</option>
         )
+    })
+
+    // Create selected user status.
+    const singleUser = setRealTimeUser.map(user => {
+        if (user.name == name) {
+            return <p>{user.name} : {user.spentTime}</p>
+        }
     })
 
 
@@ -198,7 +191,8 @@ const FirebaseStore = () => {
     return (
         <>
 
-            <ul>{userList}</ul><br />
+            {/* <ul>{userList}</ul><br /> */}
+            <ul>{singleUser}</ul>
             <select name="" id=""
                 onChange={(e) => setName(e.target.value)}>
                 <option value="Hour">Choose Customer</option>
@@ -221,10 +215,12 @@ const FirebaseStore = () => {
             <button onClick={() => { calc() }}>Calc</button>
             <button onClick={setData}>ADD DATA</button>
             <button onClick={resetAll}>RESET ALL</button>
-            <button onClick={getFeildData}>Display ALL</button>
+            <button onClick={getFeildData}>Update ALL</button>
             <br />
             {fee}
             <ul>{allUserList}</ul>
+            <br />
+
         </>
     )
 }
