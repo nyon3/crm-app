@@ -3,6 +3,7 @@ import 'firebase/firestore'
 import firebase from 'firebase/app'
 import initFirebase from '../utils/auth/initFirebase';
 import dayjs from 'dayjs';
+import { Button } from '@material-ui/core';
 
 initFirebase()
 const db = firebase.firestore();
@@ -13,14 +14,16 @@ const FirebaseStore = () => {
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
     const [fee, setFee] = useState('Have a nice day!');
-    const [customer, setCustomer] = useState([])
+
+    // 全顧客情報を取得するときのステート、必要なければ削除
+    // const [customer, setCustomer] = useState([])
 
 
     // the customer query.
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
 
-
+    // アプリをあけたらカスタマー情報を更新する
     useEffect(() => {
         docRef.onSnapshot(async (snapshot) => {
             let userInfo = []
@@ -45,18 +48,19 @@ const FirebaseStore = () => {
     //     setRealTimeUserInfo(userInfo)
     // })
 
-    const getFeildData = async () => {
-        const snapshot = await db.collection('users').get();
-        const _users = [];
+    // 全顧客のリストを取得して表示する
+    // const getFeildData = async () => {
+    //     const snapshot = await db.collection('users').get();
+    //     const _users = [];
 
-        snapshot.forEach(doc => {
-            _users.push({
-                userId: doc.id,
-                ...doc.data()
-            });
-        })
-        setCustomer(_users)
-    };
+    //     snapshot.forEach(doc => {
+    //         _users.push({
+    //             userId: doc.id,
+    //             ...doc.data()
+    //         });
+    //     })
+    //     setCustomer(_users)
+    // };
 
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
@@ -76,8 +80,25 @@ const FirebaseStore = () => {
         return <p>{`${hour} : ${min}`}</p>
     }
 
-    //  Submit customer's spending time on database.
-    const setData = async () => {
+    // reset all customer's spending time on database.　
+    // TODO アラートを実装
+    const resetAll = async () => {
+        docRef.get().then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                doc.ref.update({
+                    spentTime: 0
+                });
+            });
+        }).then(() => console.log('reset all data')).catch((err) => console.log(err))
+    };
+
+    // Calc Max and spentTime.
+    const calc = async () => {
+        let timeLimit = 0
+        const charge = 250
+        const totalTimeForMonth = []
+
+        // 入店時間と退店時間を比較して、トータル時間を計算
         const check = (arrivedHour, arrivedMinute) => {
             return new Promise(res => {
                 // Current time.
@@ -90,6 +111,7 @@ const FirebaseStore = () => {
                 // Set calculated time in Count.
             })
         };
+        // トータル時間をデータベースに送信する
         await check(hour, minute).then(res => {
             query.get().then(snapshots => {
                 snapshots.forEach(snapshot => {
@@ -98,25 +120,6 @@ const FirebaseStore = () => {
                 });
             }).then(() => console.log('updated')).catch((err) => console.log(err))
         })
-    };
-
-    // reset all customer's spending time on database.
-    const resetAll = async () => {
-        docRef.get().then(querySnapshot => {
-            querySnapshot.forEach(doc => {
-                doc.ref.update({
-                    spentTime: 0
-                });
-            });
-        }).then(() => console.log('reset all data')).catch((err) => console.log(err))
-    };
-
-    // Calc Max and spentTime.
-    async function calc() {
-        let timeLimit = 0
-        const charge = 250
-        const totalTimeForMonth = []
-
         // 会員さんの今月使った時間とメンバーシップ情報を取得
         await query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
@@ -138,6 +141,7 @@ const FirebaseStore = () => {
             });
         }
         //　超過料金の計算処理を実行
+        // TODO お客様を変更してボタンを押すと合計時間がバグっている
         await resolveOverTime(timeLimit, totalTimeForMonth[0]).then((res) => {
             if (res >= 0) {
                 return setFee(`残り時間は ${res}分です`);
@@ -154,12 +158,12 @@ const FirebaseStore = () => {
     }
 
 
-    // Create ALL user status. 
-    const allUserList = customer.map(user => {
-        return (
-            <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
-        )
-    })
+    // Create ALL user status. 全顧客情報を取得するボタンを実装しないなら削除
+    // const allUserList = customer.map(user => {
+    //     return (
+    //         <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
+    //     )
+    // })
 
     // Make list for time.
     const list = (minute) => {
@@ -193,6 +197,7 @@ const FirebaseStore = () => {
 
             {/* <ul>{userList}</ul><br /> */}
             <ul>{singleUser}</ul>
+            {/* <p>{fee}</p> */}
             <select name="" id=""
                 onChange={(e) => setName(e.target.value)}>
                 <option value="Hour">Choose Customer</option>
@@ -212,13 +217,11 @@ const FirebaseStore = () => {
             </select>
             <br />
             <p>Total time is {totalTime(hour, minute)}</p>
-            <button onClick={() => { calc() }}>Calc</button>
-            <button onClick={setData}>ADD DATA</button>
-            <button onClick={resetAll}>RESET ALL</button>
-            <button onClick={getFeildData}>Update ALL</button>
+            <Button variant="contained" color="primary" onClick={() => { calc() }}>Calc</Button>
+            <Button variant="contained" color="secondary" onClick={resetAll}>RESET ALL</Button>
+            {/* <button onClick={getFeildData}>Update ALL</button> */}
             <br />
-            {fee}
-            <ul>{allUserList}</ul>
+            {/* <ul>{allUserList}</ul> */}
             <br />
 
         </>
