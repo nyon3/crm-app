@@ -4,6 +4,9 @@ import firebase from 'firebase/app'
 import initFirebase from '../utils/auth/initFirebase';
 import dayjs from 'dayjs';
 import { Button } from '@material-ui/core';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 
 initFirebase()
 const db = firebase.firestore();
@@ -13,12 +16,9 @@ const FirebaseStore = () => {
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
-    const [fee, setFee] = useState('Have a nice day!');
-
-    // 全顧客情報を取得するときのステート、必要なければ削除
-    // const [customer, setCustomer] = useState([])
-
-
+    const [processing, setProcessing] = useState('');
+    const [succeeded, setSucceeded] = useState(false);
+    const [disabled, setDisabled] = useState(true)
     // the customer query.
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
@@ -36,31 +36,6 @@ const FirebaseStore = () => {
             setRealTimeUserInfo(userInfo)
         })
     }, [])
-
-    // docRef.where('name', '==', name).onSnapshot(async (snapshot) => {
-    //     let userInfo = []
-    //     await Promise.all(snapshot.docs.map(async (doc) => {
-    //         userInfo.push({
-    //             userId: doc.id,
-    //             ...doc.data()
-    //         })
-    //     }))
-    //     setRealTimeUserInfo(userInfo)
-    // })
-
-    // 全顧客のリストを取得して表示する
-    // const getFeildData = async () => {
-    //     const snapshot = await db.collection('users').get();
-    //     const _users = [];
-
-    //     snapshot.forEach(doc => {
-    //         _users.push({
-    //             userId: doc.id,
-    //             ...doc.data()
-    //         });
-    //     })
-    //     setCustomer(_users)
-    // };
 
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
@@ -100,9 +75,11 @@ const FirebaseStore = () => {
 
     // Calc Max and spentTime.
     const calc = async () => {
-        // let timeLimit = 0
+
         const charge = 250
         // const totalTimeForMonth = []
+
+        setProcessing(true)
 
         // 入店時間と退店時間を比較して、トータル時間を計算
         const check = (arrivedHour, arrivedMinute) => {
@@ -110,11 +87,12 @@ const FirebaseStore = () => {
                 // Current time.
                 const dateFrom = dayjs();
                 // End time.
-                // TODO 四捨五入を導入！
+
                 const dateTo = dayjs().hour(arrivedHour).minute(arrivedMinute);
                 //   Calculate difference between start time and end time.
                 const difference = dateFrom.diff(dateTo, 'minute');
                 const result = difference * -1
+                // TODO 四捨五入を導入！
                 res(result)
                 // Set calculated time in Count.
             })
@@ -125,27 +103,13 @@ const FirebaseStore = () => {
                 snapshots.forEach(snapshot => {
                     docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(res) })
                 });
-            }).then(() => console.log('updated')).catch((err) => console.log(err))
+            }).then(() => {
+                setSucceeded(true)
+                setProcessing(false)
+            }).catch((err) => console.log(err))
         })
 
-        // // 会員さんの今月使った時間とメンバーシップ情報を取得
-        // await query.get().then(snapshots => {
-        //     snapshots.forEach(snapshot => {
-        //         totalTimeForMonth.push(snapshot.data().spentTime);
-        //         if (snapshot.data().membership === 'lite') {
-        //             timeLimit = 300
-        //         } else {
-        //             timeLimit = 720
-        //         }
-        //     });
-        // }).then(() => console.log(timeLimit, totalTimeForMonth[0]));
 
-        // // 限界時間から今月使った時間を差し引いて、残り時間を計算する
-        // const resolveOverTime = (limit, used) => {
-        //     return new Promise(resolve => {
-        //         resolve(limit - used);
-        //     });
-        // }
         // //　超過料金の計算処理を実行
         // // TODO お客様を変更してボタンを押すと合計時間がバグっている
         // await resolveOverTime(timeLimit, totalTimeForMonth[0]).then((res) => {
@@ -162,14 +126,6 @@ const FirebaseStore = () => {
         //     } else setFee(`${res}分の超過料金の計算をお願いします。`);
         // })
     }
-
-
-    // Create ALL user status. 全顧客情報を取得するボタンを実装しないなら削除
-    // const allUserList = customer.map(user => {
-    //     return (
-    //         <li key={user.userId}>{user.name} : {user.spentTime} : {user.membership}</li>
-    //     )
-    // })
 
     // Make list for time.
     const list = (minute) => {
@@ -196,6 +152,13 @@ const FirebaseStore = () => {
         }
     })
 
+    function Alert(props) {
+        return <MuiAlert elevation={6} variant="filled" {...props} />;
+    }
+
+    const handleClose = () => {
+        setSucceeded(false)
+    }
 
     // 　　　Create User interface.
     return (
@@ -205,7 +168,10 @@ const FirebaseStore = () => {
             <ul>{singleUser}</ul>
             {/* <p>{fee}</p> */}
             <select name="" id=""
-                onChange={(e) => setName(e.target.value)}>
+                onChange={(e) => {
+                    setName(e.target.value);
+                    setDisabled(false)
+                }}>
                 <option value="Hour">Choose Customer</option>
                 {members}
             </select>
@@ -223,13 +189,22 @@ const FirebaseStore = () => {
             </select>
             <br />
             <p>Total time is {totalTime(hour, minute)}</p>
-            <Button variant="contained" color="primary" onClick={() => { calc() }}>Calc</Button>
+            {processing ? (<CircularProgress />) : (
+                <Button
+                    disabled={disabled}
+                    variant="contained"
+                    color="primary"
+                    onClick={() => { calc() }}>
+                    Calc
+                </Button>)}
             <Button variant="contained" color="secondary" onClick={resetAll}>RESET ALL</Button>
-            {/* <button onClick={getFeildData}>Update ALL</button> */}
             <br />
-            {/* <ul>{allUserList}</ul> */}
-            <br />
-
+            { succeeded ? (
+                <Alert onClose={handleClose} severity="success">
+                    This is a success message!
+                </Alert>
+            ) : (<p>NG</p>)
+            }
         </>
     )
 }
