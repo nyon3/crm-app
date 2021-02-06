@@ -7,6 +7,12 @@ import { Button } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 
 initFirebase()
 const db = firebase.firestore();
@@ -16,6 +22,7 @@ const FirebaseStore = () => {
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
+    const [dialog, setDialog] = useState(false);
     const [processing, setProcessing] = useState('');
     const [succeeded, setSucceeded] = useState(false);
     const [disabled, setDisabled] = useState(true)
@@ -37,6 +44,7 @@ const FirebaseStore = () => {
         })
     }, [])
 
+    // Component for display spent time.
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
         const dateFrom = dayjs();
@@ -56,7 +64,6 @@ const FirebaseStore = () => {
     }
 
     // reset all customer's spending time on database.　
-    // TODO アラートを実装
     const resetAll = async () => {
         docRef.get().then(querySnapshot => {
             querySnapshot.forEach(doc => {
@@ -70,7 +77,8 @@ const FirebaseStore = () => {
                     });
                 }
             });
-        }).then(() => console.log('reset all data')).catch((err) => console.log(err))
+        }).then(() => console.log('reset all data')).catch((err) => console.log(err));
+        setDialog(false)
     };
 
     // Calc Max and spentTime.
@@ -147,15 +155,31 @@ const FirebaseStore = () => {
 
     // Create selected user status.
     const singleUser = setRealTimeUser.map(user => {
+        function min2hour(time) {
+            var hour = Math.floor(time / 60);
+            var min = time % 60;
+
+            return (`${hour} : ${min}`)
+        }
         if (user.name == name) {
-            return <p>{user.name} : {user.spentTime}</p>
+            return <p>{user.name} = time remains {min2hour(user.spentTime)}</p>
         }
     })
+
 
     function Alert(props) {
         return <MuiAlert elevation={6} variant="filled" {...props} />;
     }
 
+    // リセットダイアログを開く
+    const dialogOpen = () => {
+        setDialog(true);
+    };
+    // リセットダイアログを閉じる
+    const dialogClose = () => {
+        setDialog(false);
+    };
+    // 登録成功の表示を閉じる
     const handleClose = () => {
         setSucceeded(false)
     }
@@ -163,10 +187,7 @@ const FirebaseStore = () => {
     // 　　　Create User interface.
     return (
         <>
-
-            {/* <ul>{userList}</ul><br /> */}
             <ul>{singleUser}</ul>
-            {/* <p>{fee}</p> */}
             <select name="" id=""
                 onChange={(e) => {
                     setName(e.target.value);
@@ -196,14 +217,41 @@ const FirebaseStore = () => {
                     color="primary"
                     onClick={() => { calc() }}>
                     Calc
-                </Button>)}
-            <Button variant="contained" color="secondary" onClick={resetAll}>RESET ALL</Button>
+                </Button>
+            )}
+            <Button
+                variant="contained"
+                color="secondary"
+                onClick={dialogOpen}>
+                RESET ALL
+            </Button>
+            <Dialog
+                open={dialog}
+                onClose={dialogClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"CAUTION!"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure, you want to RESET all of the date?
+          </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={dialogClose} color="primary">
+                        Disagree
+          </Button>
+                    <Button onClick={() => resetAll()} color="primary" autoFocus>
+                        Agree
+          </Button>
+                </DialogActions>
+            </Dialog >
             <br />
             { succeeded ? (
                 <Alert onClose={handleClose} severity="success">
                     This is a success message!
                 </Alert>
-            ) : (<p>NG</p>)
+            ) : ('')
             }
         </>
     )
