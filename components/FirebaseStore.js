@@ -5,7 +5,6 @@ import initFirebase from '../utils/auth/initFirebase';
 import dayjs from 'dayjs';
 import { Button } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -153,8 +152,8 @@ const FirebaseStore = () => {
         )
     })
 
-    // Create selected user status.
-    const singleUser = setRealTimeUser.map(user => {
+    // Display selected user status.
+    const userInfo = setRealTimeUser.map(user => {
         function min2hour(time) {
             var hour = Math.floor(time / 60);
             var min = time % 60;
@@ -162,7 +161,7 @@ const FirebaseStore = () => {
             return (`${hour} : ${min}`)
         }
         if (user.name == name) {
-            return <p>{user.name} = time remains {min2hour(user.spentTime)}</p>
+            return <p>{user.name} <strong> {min2hour(user.spentTime)}</strong></p>
         }
     })
 
@@ -187,7 +186,7 @@ const FirebaseStore = () => {
     // 　　　Create User interface.
     return (
         <>
-            <ul>{singleUser}</ul>
+            <ul>{userInfo}</ul>
             <select name="" id=""
                 onChange={(e) => {
                     setName(e.target.value);

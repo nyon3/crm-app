@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import useSWR from 'swr'
 import Link from 'next/link'
 import { useUser } from '../utils/auth/useUser'
@@ -48,11 +48,6 @@ const Index = () => {
         >
           Log out
         </p>
-      </div>
-      <div>
-        <Link href={'/example'}>
-          <a>Another example page</a>
-        </Link>
       </div>
       {error && <div>Failed to fetch food!</div>}
       {data && !error ? (
