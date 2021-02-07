@@ -82,10 +82,6 @@ const FirebaseStore = () => {
 
     // Calc Max and spentTime.
     const calc = async () => {
-
-        const charge = 250
-        // const totalTimeForMonth = []
-
         setProcessing(true)
 
         // 入店時間と退店時間を比較して、トータル時間を計算
@@ -116,22 +112,6 @@ const FirebaseStore = () => {
             }).catch((err) => console.log(err))
         })
 
-
-        // //　超過料金の計算処理を実行
-        // // TODO お客様を変更してボタンを押すと合計時間がバグっている
-        // await resolveOverTime(timeLimit, totalTimeForMonth[0]).then((res) => {
-        //     if (res >= 0) {
-        //         return setFee(`残り時間は ${res}分です`);
-        //     } else if (res <= -1, res >= -15) {
-        //         return setFee(`${res}分過ぎています。 料金は${charge}円です。`);
-        //     } else if (res <= -16, res >= -30) {
-        //         return setFee(`${res}分過ぎています。 料金は${charge * 2}円です。`);
-        //     } else if (res <= -31, res >= -45) {
-        //         return setFee(`${res}分過ぎています。 料金は${charge * 3}円です。`);
-        //     } else if (res <= -46, res >= -60) {
-        //         return setFee(`${res}分過ぎています。 料金は${charge * 4}円です。`);
-        //     } else setFee(`${res}分の超過料金の計算をお願いします。`);
-        // })
     }
 
     // Make list for time.
@@ -179,11 +159,9 @@ const FirebaseStore = () => {
         setDialog(false);
     };
     // 登録成功の表示を閉じる
-    const handleClose = () => {
-        setSucceeded(false)
-    }
+    const handleClose = () => setSucceeded(false)
 
-    // 　　　Create User interface.
+    // Create User interface.
     return (
         <>
             <ul>{userInfo}</ul>
