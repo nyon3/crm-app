@@ -43,7 +43,7 @@ const FirebaseStore = () => {
         })
     }, [])
 
-    // Component for display spent time.
+    // TODO; replace and merge for check in calc()
     const totalTime = (arrivedHour, arrivedMinute) => {
         // Current time.
         const dateFrom = dayjs();
@@ -52,12 +52,14 @@ const FirebaseStore = () => {
         //   Calculate difference between start time and end time.
         const totalMinutes = dateFrom.diff(dateTo, 'minute');
 
-        var hour = Math.floor(totalMinutes / 60);
-        var min = totalMinutes % 60;
+        const hour = dateFrom.diff(dateTo, 'hour');
+        const min = Math.ceil(dateFrom.diff(dateTo, 'minutes') % 60 / 15) * 15
 
         if (totalMinutes < 0) {
             return <p>滞在時間がマイナスです</p>
 
+        } else if (min === 60) {
+            return <p>{`${hour + 1} : ${0}`}</p>
         }
         return <p>{`${hour} : ${min}`}</p>
     }
