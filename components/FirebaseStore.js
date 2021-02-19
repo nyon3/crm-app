@@ -29,7 +29,8 @@ const FirebaseStore = () => {
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
 
-    // アプリをあけたらカスタマー情報を更新する
+    // アプリをあけたらカスタマー情報を更新する 
+    // TODO>  新しいライブラリで、書き換える
     useEffect(() => {
         docRef.onSnapshot(async (snapshot) => {
             let userInfo = []
@@ -44,7 +45,7 @@ const FirebaseStore = () => {
     }, [])
 
     // TODO; replace and merge for check in calc()
-    const totalTime = (arrivedHour, arrivedMinute) => {
+    const getTimeDifference = (arrivedHour, arrivedMinute) => {
         // Current time.
         const dateFrom = dayjs();
         // End time.
@@ -96,12 +97,12 @@ const FirebaseStore = () => {
                 const dateTo = dayjs().hour(arrivedHour).minute(arrivedMinute);
                 //   Calculate difference between start time and end time.
                 const difference = dateFrom.diff(dateTo, 'minute');
-                const result = difference * -1
-                // TODO 四捨五入を導入！
-                res(result)
+                const Rounded_To_Nearest_Fraction = (Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference) * -1
+                res(Rounded_To_Nearest_Fraction)
                 // Set calculated time in Count.
             })
         };
+
         // トータル時間をデータベースに送信する
         await check(hour, minute).then(res => {
             query.get().then(snapshots => {
@@ -188,7 +189,7 @@ const FirebaseStore = () => {
                 {list(59)}
             </select>
             <br />
-            <p>Total time is {totalTime(hour, minute)}</p>
+            <p>Total time is {getTimeDifference(hour, minute)}</p>
             {processing ? (<CircularProgress />) : (
                 <Button
                     disabled={disabled}
