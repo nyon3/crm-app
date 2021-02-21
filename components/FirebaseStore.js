@@ -12,6 +12,8 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
+// Components
+import { getTotalTime } from "../utils/date/getTotalTime";
 
 initFirebase()
 const db = firebase.firestore();
@@ -30,7 +32,7 @@ const FirebaseStore = () => {
     const query = docRef.where('name', '==', name);
 
     // アプリをあけたらカスタマー情報を更新する 
-    // TODO>  新しいライブラリで、書き換える
+    // HACK:>  新しいライブラリで、書き換える
     useEffect(() => {
         docRef.onSnapshot(async (snapshot) => {
             let userInfo = []
@@ -43,27 +45,6 @@ const FirebaseStore = () => {
             setRealTimeUserInfo(userInfo)
         })
     }, [])
-
-    // TODO; replace and merge for check in calc()
-    const getTimeDifference = (arrivedHour, arrivedMinute) => {
-        // Current time.
-        const dateFrom = dayjs();
-        // End time.
-        const dateTo = dayjs().hour(arrivedHour).minute(arrivedMinute);
-        //   Calculate difference between start time and end time.
-        const totalMinutes = dateFrom.diff(dateTo, 'minute');
-
-        const hour = dateFrom.diff(dateTo, 'hour');
-        const min = Math.ceil(dateFrom.diff(dateTo, 'minutes') % 60 / 15) * 15
-
-        if (totalMinutes < 0) {
-            return <p>滞在時間がマイナスです</p>
-
-        } else if (min === 60) {
-            return <p>{`${hour + 1} : ${0}`}</p>
-        }
-        return <p>{`${hour} : ${min}`}</p>
-    }
 
     // reset all customer's spending time on database.　
     const resetAll = async () => {
@@ -84,7 +65,7 @@ const FirebaseStore = () => {
     };
 
     // Calc Max and spentTime.
-    const calc = async () => {
+    const sendTotalTimeToDb = async () => {
         setProcessing(true)
 
         // 入店時間と退店時間を比較して、トータル時間を計算
@@ -189,13 +170,13 @@ const FirebaseStore = () => {
                 {list(59)}
             </select>
             <br />
-            <p>Total time is {getTimeDifference(hour, minute)}</p>
+            <div>Total time is {getTotalTime(hour, minute)}</div>
             {processing ? (<CircularProgress />) : (
                 <Button
                     disabled={disabled}
                     variant="contained"
                     color="primary"
-                    onClick={() => { calc() }}>
+                    onClick={() => { sendTotalTimeToDb() }}>
                     Calc
                 </Button>
             )}
