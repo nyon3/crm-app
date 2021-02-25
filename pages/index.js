@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useUser } from '../utils/auth/useUser'
 import FirebaseStore from '../components/FirebaseStore'
 
-
 const fetcher = (url, token) =>
   fetch(url, {
     method: 'GET',
@@ -34,7 +33,7 @@ const Index = () => {
   }
 
   return (
-    <div>
+    <div className="global-wrapper">
       <div>
         <p>You're signed in. Email: {user.email}</p>
         <p
@@ -49,12 +48,13 @@ const Index = () => {
           Log out
         </p>
       </div>
-      {error && <div>Failed to fetch food!</div>}
+      {/* get date from backend */}
+      {/* {error && <div>Failed to fetch food!</div>}
       {data && !error ? (
         <div>Your favorite food is {data.food}.</div>
       ) : (
           <div>Loading...</div>
-        )}
+        )} */}
       <FirebaseStore />
     </div>
   )

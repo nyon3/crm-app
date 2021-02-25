@@ -125,7 +125,7 @@ const FirebaseStore = () => {
             return (`${hour} : ${min}`)
         }
         if (user.name == name) {
-            return <p>{user.name} <strong> {min2hour(user.spentTime)}</strong></p>
+            return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime)}`}</strong></p>
         }
     })
 
@@ -148,36 +148,38 @@ const FirebaseStore = () => {
     // Create User interface.
     return (
         <>
-            <ul>{userInfo}</ul>
+            <h2>お客様は</h2>
             <select name="" id=""
                 onChange={(e) => {
                     setName(e.target.value);
                     setDisabled(false)
                 }}>
-                <option value="Hour">Choose Customer</option>
+                <option value="Hour">Guest</option>
                 {members}
             </select>
-            <br />
-            <br />
+            <ul>{userInfo}</ul>
+            <h2>来店時間は</h2>
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
-                <option value="Hour">HOUR</option>
+                <option value="Hour">Hour</option>
                 {list(24)}
             </select>
             <select name="Minute" id=""
                 onChange={(e) => setMinute(e.target.value)}>
-                <option value="Minute">MINUTE</option>
+                <option value="Minute">Minute</option>
                 {list(59)}
             </select>
             <br />
-            <div>Total time is {getTotalTime(hour, minute)}</div>
+            <h2>今日の滞在時間は {getTotalTime(hour, minute)}　です</h2>
+            <br />
+            <br />
             {processing ? (<CircularProgress />) : (
                 <Button
                     disabled={disabled}
                     variant="contained"
                     color="primary"
                     onClick={() => { sendTotalTimeToDb() }}>
-                    Calc
+                    Submit
                 </Button>
             )}
             <Button

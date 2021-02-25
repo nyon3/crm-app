@@ -15,7 +15,7 @@ export const getTotalTime = (arrivedHour, arrivedMinute) => {
         return 滞在時間がマイナスです
 
     } else if (min === 60) {
-        return <p>{`${hour + 1} : ${0}`}</p>
+        return <>{`${hour + 1} : ${0}`}</>
     }
-    return <p>{`${hour} : ${min}`}</p>
+    return <>{`${hour} : ${min}`}</>
 }
