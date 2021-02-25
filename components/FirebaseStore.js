@@ -170,7 +170,10 @@ const FirebaseStore = () => {
                 {list(59)}
             </select>
             <br />
-            <h2>今日の滞在時間は {getTotalTime(hour, minute)}　です</h2>
+            <div>
+                <p className='totalTime_subTitle'>今日の滞在時間は</p>
+                <h2 className='totalTime_title'> {getTotalTime(hour, minute)}</h2>
+            </div>
             <br />
             <br />
             {processing ? (<CircularProgress />) : (

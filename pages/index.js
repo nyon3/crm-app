@@ -35,7 +35,7 @@ const Index = () => {
   return (
     <div className="global-wrapper">
       <div>
-        <p>You're signed in. Email: {user.email}</p>
+        {/* <p>You're signed in. Email: {user.email}</p> */}
         <p
           style={{
             display: 'inline-block',
