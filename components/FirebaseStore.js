@@ -14,6 +14,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 // Components
 import { getTotalTime } from "../utils/date/getTotalTime";
+import { createHourArray, createMinuteArray } from "../utils/date/timeArray";
 
 initFirebase()
 const db = firebase.firestore();
@@ -98,17 +99,6 @@ const FirebaseStore = () => {
 
     }
 
-    // Make list for time.
-    const list = (minute) => {
-        const times = [...Array(minute)].map((i, index) => index + 1);
-        return (
-            times.map((m) => {
-                return (
-                    <option value={m} key={m}>{m}</option>
-                )
-            })
-        )
-    }
     // Make user list for option 
     const members = setRealTimeUser.map(user => {
         return (
@@ -162,12 +152,12 @@ const FirebaseStore = () => {
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
                 <option value="Hour">Hour</option>
-                {list(24)}
+                {createHourArray(5)}
             </select>
             <select name="Minute" id=""
                 onChange={(e) => setMinute(e.target.value)}>
                 <option value="Minute">Minute</option>
-                {list(59)}
+                {createMinuteArray(60)}
             </select>
             <br />
             <div>
