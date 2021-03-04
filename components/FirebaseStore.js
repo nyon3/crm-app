@@ -65,28 +65,47 @@ const FirebaseStore = () => {
         setDialog(false)
     };
 
+    // 入店時間と退店時間を比較して、トータル時間を計算
+    function countTime(hour, minute) {
+        return new Promise(res => {
+            const dateFrom = dayjs();
+            const dateTo = dayjs().hour(hour).minute(minute);
+            //   Calculate difference between start time and end time.
+            const difference = dateFrom.diff(dateTo, 'minute');
+            const Rounded_To_Nearest_Fraction = (Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference)
+            res(Rounded_To_Nearest_Fraction)
+            // Set calculated time in Count.
+        })
+    }
+
+    async function getRedoTime() {
+        return await countTime(hour, minute);
+    }
+
+
+    const redo = () => {
+        getRedoTime().then(res => {
+            query.get().then(snapshots => {
+                snapshots.forEach(snapshot => {
+                    docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(res) })
+                });
+            }).then(() => {
+                setSucceeded(true)
+                setProcessing(false)
+            }).catch((err) => console.log(err))
+        })
+    }
+
+    async function getSubmitTime() {
+        return await countTime(hour, minute) * -1;
+    }
+
     // Calc Max and spentTime.
     const sendTotalTimeToDb = async () => {
         setProcessing(true)
 
-        // 入店時間と退店時間を比較して、トータル時間を計算
-        const check = (arrivedHour, arrivedMinute) => {
-            return new Promise(res => {
-                // Current time.
-                const dateFrom = dayjs();
-                // End time.
-
-                const dateTo = dayjs().hour(arrivedHour).minute(arrivedMinute);
-                //   Calculate difference between start time and end time.
-                const difference = dateFrom.diff(dateTo, 'minute');
-                const Rounded_To_Nearest_Fraction = (Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference) * -1
-                res(Rounded_To_Nearest_Fraction)
-                // Set calculated time in Count.
-            })
-        };
-
         // トータル時間をデータベースに送信する
-        await check(hour, minute).then(res => {
+        getSubmitTime().then(res => {
             query.get().then(snapshots => {
                 snapshots.forEach(snapshot => {
                     docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(res) })
@@ -175,6 +194,13 @@ const FirebaseStore = () => {
                     Submit
                 </Button>
             )}
+            <Button
+                disabled={disabled}
+                variant="contained"
+                color="default"
+                onClick={() => { redo() }}>
+                Redo
+            </Button>
             <Button
                 variant="contained"
                 color="secondary"
