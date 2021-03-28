@@ -20,6 +20,7 @@ initFirebase()
 const db = firebase.firestore();
 
 const FirebaseStore = () => {
+    // Todo 状態管理が多すぎるのでなんとかできないか？
     const [setRealTimeUser, setRealTimeUserInfo] = useState([]);
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
@@ -28,12 +29,13 @@ const FirebaseStore = () => {
     const [processing, setProcessing] = useState('');
     const [succeeded, setSucceeded] = useState(false);
     const [disabled, setDisabled] = useState(true)
-    // the customer query.
+
+    // firestore customer query.
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
 
     // アプリをあけたらカスタマー情報を更新する 
-    // HACK:>  新しいライブラリで、書き換える
+    // TODO:>  新しいライブラリで、書き換える
     useEffect(() => {
         docRef.onSnapshot(async (snapshot) => {
             let userInfo = []
@@ -47,8 +49,15 @@ const FirebaseStore = () => {
         })
     }, [])
 
+    // Make user list for option 
+    const members = setRealTimeUser.map(user => {
+        return (
+            <option value={user.name}>{user.name}</option>
+        )
+    })
+
     // reset all customer's spending time on database.　
-    const resetAll = async () => {
+    function resetAll() {
         docRef.get().then(querySnapshot => {
             querySnapshot.forEach(doc => {
                 if (doc.data().membership == 'lite') {
@@ -62,45 +71,45 @@ const FirebaseStore = () => {
                 }
             });
         }).then(() => console.log('reset all data')).catch((err) => console.log(err));
-        setDialog(false)
-    };
+        setDialog(false);
+    }
 
     // 入店時間と退店時間を比較して、トータル時間を計算
     function countTime(hour, minute) {
+        const dateFrom = dayjs();
+        const dateTo = dayjs().hour(hour).minute(minute);
+
+        //   Calculate difference between start time and end time.
+        const difference = dateFrom.diff(dateTo, 'minute');
+
+        // the number of the time deference.
         return new Promise(res => {
-            const dateFrom = dayjs();
-            const dateTo = dayjs().hour(hour).minute(minute);
-            //   Calculate difference between start time and end time.
-            const difference = dateFrom.diff(dateTo, 'minute');
-            const Rounded_To_Nearest_Fraction = (Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference)
-            res(Rounded_To_Nearest_Fraction)
-            // Set calculated time in Count.
+            res(Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference)
         })
     }
 
-    async function getRedoTime() {
-        return await countTime(hour, minute);
+    // Redo function
+    const getRedoTime = async () => {
+        // getSubmittedTime is the current number that already submitted.
+        const getSubmittedTime = await countTime(hour, minute);
+
+        query.get().then(snapshots => {
+            snapshots.forEach(snapshot => {
+                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(getSubmittedTime) })
+            });
+        }).then(() => {
+            setSucceeded(true)
+            setProcessing(false)
+        }).catch((err) => console.log(err));
     }
 
-
-    const redo = () => {
-        getRedoTime().then(res => {
-            query.get().then(snapshots => {
-                snapshots.forEach(snapshot => {
-                    docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(res) })
-                });
-            }).then(() => {
-                setSucceeded(true)
-                setProcessing(false)
-            }).catch((err) => console.log(err))
-        })
-    }
-
+    // Todo fix this function 
     async function getSubmitTime() {
         return await countTime(hour, minute) * -1;
     }
 
-    // Calc Max and spentTime.
+    // Todo fix this function too.
+    // Calc Max and spentTime. 
     const sendTotalTimeToDb = async () => {
         setProcessing(true)
 
@@ -118,14 +127,8 @@ const FirebaseStore = () => {
 
     }
 
-    // Make user list for option 
-    const members = setRealTimeUser.map(user => {
-        return (
-            <option value={user.name}>{user.name}</option>
-        )
-    })
 
-    // Display selected user status.
+    // TODO fix this function . Display selected user status.
     const userInfo = setRealTimeUser.map(user => {
         function min2hour(time) {
             var hour = Math.floor(time / 60);
@@ -198,7 +201,7 @@ const FirebaseStore = () => {
                 disabled={disabled}
                 variant="contained"
                 color="default"
-                onClick={() => { redo() }}>
+                onClick={() => { getRedoTime() }}>
                 Redo
             </Button>
             <Button
