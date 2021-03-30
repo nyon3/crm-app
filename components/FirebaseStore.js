@@ -88,14 +88,10 @@ const FirebaseStore = () => {
         })
     }
 
-    // Redo function
-    const getRedoTime = async () => {
-        // getSubmittedTime is the current number that already submitted.
-        const getSubmittedTime = await countTime(hour, minute);
-
+    const sendDate = (hours) => {
         query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
-                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(getSubmittedTime) })
+                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(hours) })
             });
         }).then(() => {
             setSucceeded(true)
@@ -103,28 +99,20 @@ const FirebaseStore = () => {
         }).catch((err) => console.log(err));
     }
 
-    // Todo fix this function 
-    async function getSubmitTime() {
-        return await countTime(hour, minute) * -1;
+    // Send a Redo time to firestore.
+    const getRedoTime = async () => {
+        // TODO Ommit this valu to React Hooks (reducer)
+        const submitHours = await countTime(hour, minute);
+       sendDate(submitHours)  
     }
 
-    // Todo fix this function too.
-    // Calc Max and spentTime. 
-    const sendTotalTimeToDb = async () => {
+    // Send a reduce time to firestore.
+    const reduceTime = async () => {
         setProcessing(true)
-
+        // TODO Ommit this valu to React Hooks (reducer)
+        const submitHours = await countTime(hour, minute) * -1;
         // トータル時間をデータベースに送信する
-        getSubmitTime().then(res => {
-            query.get().then(snapshots => {
-                snapshots.forEach(snapshot => {
-                    docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(res) })
-                });
-            }).then(() => {
-                setSucceeded(true)
-                setProcessing(false)
-            }).catch((err) => console.log(err))
-        })
-
+        sendDate(submitHours)
     }
 
 
@@ -193,7 +181,7 @@ const FirebaseStore = () => {
                     disabled={disabled}
                     variant="contained"
                     color="primary"
-                    onClick={() => { sendTotalTimeToDb() }}>
+                    onClick={() => { reduceTime() }}>
                     Submit
                 </Button>
             )}
