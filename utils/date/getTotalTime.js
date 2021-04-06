@@ -12,7 +12,7 @@ export const getTotalTime = (arrivedHour, arrivedMinute) => {
     const min = Math.ceil(dateFrom.diff(dateTo, 'minutes') % 60 / 15) * 15
 
     if (totalMinutes < 0) {
-        return 滞在時間がマイナスです
+        return <>滞在時間がマイナスです</>
 
     } else if (min === 60) {
         return <>{`${hour + 1} : ${0}`}</>
