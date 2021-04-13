@@ -94,13 +94,16 @@ const FirebaseStore = () => {
                 docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(hours) })
             });
         }).then(() => {
-            setSucceeded(true)
-            setProcessing(false)
+            setTimeout(() => {
+                setSucceeded(true)
+                setProcessing(false) 
+            }, 3000);
         }).catch((err) => console.log(err));
     }
 
     // Send a Redo time to firestore.
-    const getRedoTime = async () => {
+    const increaseTime = async () => {
+        setProcessing(true)
         // TODO Ommit this valu to React Hooks (reducer)
         const submitHours = await countTime(hour, minute);
        sendDate(submitHours)  
@@ -182,21 +185,28 @@ const FirebaseStore = () => {
                     variant="contained"
                     color="primary"
                     onClick={() => { reduceTime() }}>
-                    Submit
+                    PLUS
                 </Button>
-            )}
-            <Button
-                disabled={disabled}
-                variant="contained"
-                color="default"
-                onClick={() => { getRedoTime() }}>
-                Redo
-            </Button>
+                )}
+                {processing ? (
+                    <Button
+                     disabled={true}>
+                        MINUS
+                    </Button>
+                ) : (
+                    <Button
+                    disabled={disabled}
+                    variant="contained"
+                    color="default"
+                    onClick={() => { increaseTime() }}>
+                    MINUS
+                </Button>
+                )}
             <Button
                 variant="contained"
                 color="secondary"
                 onClick={dialogOpen}>
-                RESET ALL
+                RESET
             </Button>
             <Dialog
                 open={dialog}
