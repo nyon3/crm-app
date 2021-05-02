@@ -34,6 +34,10 @@ const FirebaseStore = () => {
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
 
+    // Today's date.
+    const dateFrom = dayjs();
+    const dateTo = dayjs().hour(hour).minute(minute);
+
     // アプリをあけたらカスタマー情報を更新する 
     // TODO:>  新しいライブラリで、書き換える
     useEffect(() => {
@@ -76,8 +80,7 @@ const FirebaseStore = () => {
 
     // 入店時間と退店時間を比較して、トータル時間を計算
     function countTime(hour, minute) {
-        const dateFrom = dayjs();
-        const dateTo = dayjs().hour(hour).minute(minute);
+
 
         //   Calculate difference between start time and end time.
         const difference = dateFrom.diff(dateTo, 'minute');
@@ -89,14 +92,19 @@ const FirebaseStore = () => {
     }
 
     const sendDate = (hours) => {
+        // Timestamp date for Today.
+        const time = firebase.firestore.Timestamp.fromDate(new Date("November 8, 1815"))
+
+        //  login: firebase.firestore.FieldValue.arrayUnion(time) *insert this code to update() 
+        // Update each Field.
         query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
-                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(hours) })
+                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(hours) });
             });
         }).then(() => {
             setTimeout(() => {
                 setSucceeded(true)
-                setProcessing(false) 
+                setProcessing(false)
             }, 3000);
         }).catch((err) => console.log(err));
     }
@@ -106,7 +114,7 @@ const FirebaseStore = () => {
         setProcessing(true)
         // TODO Ommit this valu to React Hooks (reducer)
         const submitHours = await countTime(hour, minute);
-       sendDate(submitHours)  
+        sendDate(submitHours)
     }
 
     // Send a reduce time to firestore.
@@ -187,21 +195,21 @@ const FirebaseStore = () => {
                     onClick={() => { reduceTime() }}>
                     PLUS
                 </Button>
-                )}
-                {processing ? (
-                    <Button
-                     disabled={true}>
-                        MINUS
-                    </Button>
-                ) : (
-                    <Button
+            )}
+            {processing ? (
+                <Button
+                    disabled={true}>
+                    MINUS
+                </Button>
+            ) : (
+                <Button
                     disabled={disabled}
                     variant="contained"
                     color="default"
                     onClick={() => { increaseTime() }}>
                     MINUS
                 </Button>
-                )}
+            )}
             <Button
                 variant="contained"
                 color="secondary"
