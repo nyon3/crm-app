@@ -1,6 +1,6 @@
 export function createHourArray(num) {
     // 14から始まる配列を作成する
-    const numbers = [...Array(num)].map((i, index) => index + 14);
+    const numbers = [...Array(num)].map((i, index) => index + 1);
 
     return (
         numbers.map((number) => {

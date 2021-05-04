@@ -61,18 +61,20 @@ const FirebaseStore = () => {
     })
 
     // reset all customer's spending time on database.　
+    // TODO delete array
     function resetAll() {
         docRef.get().then(querySnapshot => {
             querySnapshot.forEach(doc => {
-                if (doc.data().membership == 'lite') {
-                    doc.ref.update({
-                        spentTime: 300
-                    });
-                } else {
-                    doc.ref.update({
-                        spentTime: 720
-                    });
-                }
+                // if (doc.data().membership == 'lite') {
+                //     doc.ref.update({
+                //         spentTime: 300
+                //     });
+                // } else {
+                //     doc.ref.update({
+                //         spentTime: 720
+                //     });
+                // }
+                doc.ref.update({ history: firebase.firestore.FieldValue.arrayRemove( history[0]) })
             });
         }).then(() => console.log('reset all data')).catch((err) => console.log(err));
         setDialog(false);
@@ -99,7 +101,7 @@ const FirebaseStore = () => {
         // Update each Field.
         query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
-                docRef.doc(snapshot.id).update({ spentTime: firebase.firestore.FieldValue.increment(hours) });
+                docRef.doc(snapshot.id).update({ history: firebase.firestore.FieldValue.arrayUnion(hours) });
             });
         }).then(() => {
             setTimeout(() => {
@@ -109,19 +111,19 @@ const FirebaseStore = () => {
         }).catch((err) => console.log(err));
     }
 
-    // Send a Redo time to firestore.
+    //  TODO: FIX this function Redo function.
     const increaseTime = async () => {
         setProcessing(true)
         // TODO Ommit this valu to React Hooks (reducer)
-        const submitHours = await countTime(hour, minute);
-        sendDate(submitHours)
+        // const submitHours = await countTime(hour, minute);
+        sendDate(setRealTimeUser.history.slice(-1)[0])
     }
 
     // Send a reduce time to firestore.
     const reduceTime = async () => {
         setProcessing(true)
         // TODO Ommit this valu to React Hooks (reducer)
-        const submitHours = await countTime(hour, minute) * -1;
+        const submitHours = await countTime(hour, minute);
         // トータル時間をデータベースに送信する
         sendDate(submitHours)
     }
@@ -129,6 +131,7 @@ const FirebaseStore = () => {
 
     // TODO fix this function . Display selected user status.
     const userInfo = setRealTimeUser.map(user => {
+        // Chage format of time.
         function min2hour(time) {
             var hour = Math.floor(time / 60);
             var min = time % 60;
@@ -136,7 +139,10 @@ const FirebaseStore = () => {
             return (`${hour} : ${min}`)
         }
         if (user.name == name) {
-            return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime)}`}</strong></p>
+        // get total number from history array.
+        const result = user.history
+        let total = result.reduce((sum, element) => sum + element, 0);
+            return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime - total)}`}</strong></p>
         }
     })
 
@@ -173,7 +179,7 @@ const FirebaseStore = () => {
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
                 <option value="Hour">Hour</option>
-                {createHourArray(5)}
+                {createHourArray(24)}
             </select>
             <select name="Minute" id=""
                 onChange={(e) => setMinute(e.target.value)}>
