@@ -18,8 +18,7 @@ import { createHourArray, createMinuteArray } from "../utils/date/timeArray";
 
 initFirebase()
 const db = firebase.firestore();
-
-const FirebaseStore = () => {
+const FirebaseStore = ({ data }) => {
     // Todo 状態管理が多すぎるのでなんとかできないか？
     const [setRealTimeUser, setRealTimeUserInfo] = useState([]);
     const [hour, setHour] = useState(0);
@@ -38,27 +37,27 @@ const FirebaseStore = () => {
     const dateFrom = dayjs();
     const dateTo = dayjs().hour(hour).minute(minute);
 
-    // アプリをあけたらカスタマー情報を更新する 
-    // TODO:>  新しいライブラリで、書き換える
-    useEffect(() => {
-        docRef.onSnapshot(async (snapshot) => {
-            let userInfo = []
-            await Promise.all(snapshot.docs.map(async (doc) => {
-                userInfo.push({
-                    userId: doc.id,
-                    ...doc.data()
-                })
-            }))
-            setRealTimeUserInfo(userInfo)
-        })
-    }, [])
+    // // アプリをあけたらカスタマー情報を更新する 
+    // // TODO:>  1. 名前とIDだけのデータ。　2.選ばれた人の全データ
+    // useEffect(() => {
+    //     docRef.onSnapshot(async (snapshot) => {
+    //         let userInfo = []
+    //         await Promise.all(snapshot.docs.map(async (doc) => {
+    //             userInfo.push({
+    //                 userId: doc.id,
+    //                 userName: doc.data().name
+    //             })
+    //         }))
+    //         setRealTimeUserInfo(userInfo)
+    //     })
+    // }, [])
 
-    // Make user list for option 
-    const members = setRealTimeUser.map(user => {
-        return (
-            <option value={user.name}>{user.name}</option>
-        )
-    })
+    // // Make user list for option 
+    // const members = setRealTimeUser.map(user => {
+    //     return (
+    //         <option value={user.userName} key={user.userId}>{user.userName}</option>
+    //     )
+    // })
 
     // reset all customer's spending time on database.　
     // TODO delete array
@@ -74,7 +73,7 @@ const FirebaseStore = () => {
                 //         spentTime: 720
                 //     });
                 // }
-                doc.ref.update({ history: firebase.firestore.FieldValue.arrayRemove( history[0]) })
+                doc.ref.update({ history: firebase.firestore.FieldValue.arrayRemove(history[0]) })
             });
         }).then(() => console.log('reset all data')).catch((err) => console.log(err));
         setDialog(false);
@@ -82,8 +81,6 @@ const FirebaseStore = () => {
 
     // 入店時間と退店時間を比較して、トータル時間を計算
     function countTime(hour, minute) {
-
-
         //   Calculate difference between start time and end time.
         const difference = dateFrom.diff(dateTo, 'minute');
 
@@ -116,7 +113,7 @@ const FirebaseStore = () => {
         setProcessing(true)
         // TODO Ommit this valu to React Hooks (reducer)
         // const submitHours = await countTime(hour, minute);
-        sendDate(setRealTimeUser.history.slice(-1)[0])
+        sendDate()
     }
 
     // Send a reduce time to firestore.
@@ -139,13 +136,43 @@ const FirebaseStore = () => {
             return (`${hour} : ${min}`)
         }
         if (user.name == name) {
-        // get total number from history array.
-        const result = user.history
-        let total = result.reduce((sum, element) => sum + element, 0);
+            // get total number from history array.
+            const result = user.history
+            let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
             return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime - total)}`}</strong></p>
         }
     })
 
+    function min2hour(time) {
+        var hour = Math.floor(time / 60);
+        var min = time % 60;
+
+        return (`${hour} : ${min}`)
+    }
+
+    // TODO create new useInfo component
+    function getUserInfo(name) {
+        docRef.where('name', '==', name).get().then(snapshot => {
+            snapshot.forEach(doc => {
+                if (doc.exists) {
+                    console.log(doc.data());
+                    return doc.data()
+                } else { return Promise.reject("No such document"); }
+            })
+        })
+    }
+
+    // async function userParameter(value) {
+    //     try {
+    //         const currentUser = await getUserInfo(value)
+    //         const result = currentUser.history
+    //         let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    //         return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime - total)}`}</strong></p>
+
+    //     } catch (error) {
+    //         console.log("ERROR:", error);
+    //     }
+    // }
 
     function Alert(props) {
         return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -161,20 +188,19 @@ const FirebaseStore = () => {
     };
     // 登録成功の表示を閉じる
     const handleClose = () => setSucceeded(false)
-
     // Create User interface.
     return (
         <>
-            <h2>お客様は</h2>
+            <h2>{name}様　本日の滞在時間は…</h2>
             <select name="" id=""
                 onChange={(e) => {
                     setName(e.target.value);
                     setDisabled(false)
                 }}>
                 <option value="Hour">Guest</option>
-                {members}
+                {data.map(user => <option value={user.name} key={user.id}>{user.name}</option>)}
             </select>
-            <ul>{userInfo}</ul>
+            <p>Customer info: {getUserInfo(name)}</p>
             <h2>来店時間は</h2>
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
@@ -255,3 +281,4 @@ const FirebaseStore = () => {
 }
 
 export default FirebaseStore
+

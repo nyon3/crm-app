@@ -11,7 +11,17 @@ const fetcher = (url, token) =>
     credentials: 'same-origin',
   }).then((res) => res.json())
 
-const Index = () => {
+export async function getStaticProps() {
+  const memberList = [
+    { id: 1, name: 'Musashi' },
+    { id: 2, name: 'Taro' },
+  ]
+
+  return {
+    props: { memberList } // will be passed to the page component as props
+  }
+}
+const Index = ({ memberList }) => {
   const { user, logout } = useUser()
   const { data, error } = useSWR(
     user ? ['/api/getFood', user.token] : null,
@@ -55,7 +65,7 @@ const Index = () => {
       ) : (
           <div>Loading...</div>
         )} */}
-      <FirebaseStore />
+      <FirebaseStore data={memberList} />
     </div>
   )
 }
