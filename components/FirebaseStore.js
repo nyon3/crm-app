@@ -20,7 +20,7 @@ initFirebase()
 const db = firebase.firestore();
 const FirebaseStore = ({ data }) => {
     // Todo 状態管理が多すぎるのでなんとかできないか？
-    const [setRealTimeUser, setRealTimeUserInfo] = useState([]);
+    const [realTimeUserInfo, setRealTimeUserInfo] = useState([]);
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
     const [name, setName] = useState('');
@@ -126,22 +126,23 @@ const FirebaseStore = ({ data }) => {
     }
 
 
-    // TODO fix this function . Display selected user status.
-    const userInfo = setRealTimeUser.map(user => {
+    // TODO　カスタマーを選んだら、すぐに情報が反映されるコンポーネントを作成する
+    function Timemanager(user) {
+   console.log(user.name);
         // Chage format of time.
         function min2hour(time) {
-            var hour = Math.floor(time / 60);
-            var min = time % 60;
-
+            const hour = Math.floor(time / 60);
+            const min = time % 60;
             return (`${hour} : ${min}`)
         }
-        if (user.name == name) {
-            // get total number from history array.
+        // get total number from history array.
+        if (user.history.exists) {
             const result = user.history
             let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
             return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime - total)}`}</strong></p>
-        }
-    })
+        } else { <p>N/a</p>}
+            
+}
 
     function min2hour(time) {
         var hour = Math.floor(time / 60);
@@ -155,8 +156,8 @@ const FirebaseStore = ({ data }) => {
         docRef.where('name', '==', name).get().then(snapshot => {
             snapshot.forEach(doc => {
                 if (doc.exists) {
-                    console.log(doc.data());
-                    return doc.data()
+                    setRealTimeUserInfo(doc.data())
+                    return <p>{doc.data().name}</p> 
                 } else { return Promise.reject("No such document"); }
             })
         })
@@ -190,17 +191,17 @@ const FirebaseStore = ({ data }) => {
     const handleClose = () => setSucceeded(false)
     // Create User interface.
     return (
-        <>
-            <h2>{name}様　本日の滞在時間は…</h2>
+        <>  
+            <h2>{realTimeUserInfo.name}様　本日の滞在時間は…</h2>
             <select name="" id=""
                 onChange={(e) => {
-                    setName(e.target.value);
+                    getUserInfo(e.target.value);
                     setDisabled(false)
                 }}>
                 <option value="Hour">Guest</option>
                 {data.map(user => <option value={user.name} key={user.id}>{user.name}</option>)}
             </select>
-            <p>Customer info: {getUserInfo(name)}</p>
+            <p>Customer info: </p>
             <h2>来店時間は</h2>
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
