@@ -28,7 +28,7 @@ const FirebaseStore = ({ data }) => {
     const [processing, setProcessing] = useState('');
     const [succeeded, setSucceeded] = useState(false);
     const [disabled, setDisabled] = useState(true)
-
+    const [isLoaded, setisLoaded] = useState(false)
     // firestore customer query.
     const docRef = db.collection('users')
     const query = docRef.where('name', '==', name);
@@ -127,23 +127,17 @@ const FirebaseStore = ({ data }) => {
 
 
     // TODO　カスタマーを選んだら、すぐに情報が反映されるコンポーネントを作成する
-    function Timemanager(user) {
-   console.log(user.name);
-        // Chage format of time.
-        function min2hour(time) {
-            const hour = Math.floor(time / 60);
-            const min = time % 60;
-            return (`${hour} : ${min}`)
-        }
+   const timeManager = (data) => {
+        
         // get total number from history array.
-        if (user.history.exists) {
-            const result = user.history
+        if (isLoaded) { 
+            const result = data.history
             let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            return <p>{`${user.name} 様の`} <strong> {`残り時間は ${min2hour(user.spentTime - total)}`}</strong></p>
-        } else { <p>N/a</p>}
+            return <p>{`残り時間は ${min2hour(data.spentTime - total)}`}</p>
+        } else{ return <p>N/a!</p> }
             
 }
-
+ // Chage format of time.
     function min2hour(time) {
         var hour = Math.floor(time / 60);
         var min = time % 60;
@@ -152,13 +146,17 @@ const FirebaseStore = ({ data }) => {
     }
 
     // TODO create new useInfo component
-    function getUserInfo(name) {
-        docRef.where('name', '==', name).get().then(snapshot => {
-            snapshot.forEach(doc => {
+      async function getUserInfo(name) {
+          docRef.where('name', '==', name).get().then(snapshot => {
+            snapshot.forEach(async doc => {
                 if (doc.exists) {
                     setRealTimeUserInfo(doc.data())
-                    return <p>{doc.data().name}</p> 
-                } else { return Promise.reject("No such document"); }
+                    setisLoaded(true)
+                } else { 
+                    setisLoaded(false) 
+                    return Promise.reject("No such document");
+                       
+                }
             })
         })
     }
@@ -202,6 +200,7 @@ const FirebaseStore = ({ data }) => {
                 {data.map(user => <option value={user.name} key={user.id}>{user.name}</option>)}
             </select>
             <p>Customer info: </p>
+            {timeManager(realTimeUserInfo)}
             <h2>来店時間は</h2>
             <select name="Hour" id=""
                 onChange={(e) => setHour(e.target.value)}>
