@@ -19,96 +19,28 @@ import { createHourArray, createMinuteArray } from "../utils/date/timeArray";
 initFirebase()
 const db = firebase.firestore();
 const FirebaseStore = ({ data }) => {
-    // Todo 状態管理が多すぎるのでなんとかできないか？
+    // HACK Can I reduce some fo states?
     const [realTimeUserInfo, setRealTimeUserInfo] = useState([]);
     const [hour, setHour] = useState(0);
     const [minute, setMinute] = useState(0)
-    // const [name, setName] = useState('');
     const [dialog, setDialog] = useState(false);
     const [processing, setProcessing] = useState('');
     const [succeeded, setSucceeded] = useState(false);
     const [disabled, setDisabled] = useState(true)
     const [isLoaded, setisLoaded] = useState(false)
 
-
-    // useEffect(() => {
-    //     docRef.onSnapshot(async (snapshot) => {
-    //         let userInfo = []
-    //         await Promise.all(snapshot.docs.map(async (doc) => {
-    //             userInfo.push({
-    //                 userId: doc.id,
-    //                 userName: doc.data().name
-    //             })
-    //         }))
-    //         setRealTimeUserInfo(userInfo)
-    //     })
-    // }, [])
-
-    // // Make user list for option 
-    // const members = setRealTimeUser.map(user => {
-    //     return (
-    //         <option value={user.userName} key={user.userId}>{user.userName}</option>
-    //     )
-    // })
-
-    // reset all customer's spending time on database.　
-    // TODO Fix this function
     function resetAll() {
-        docRef.get().then(querySnapshot => {
+        const historyRef = db.collection('users').where('history', '!=', []);
+
+        historyRef.get().then(querySnapshot => {
+            // var removedData = realTimeUserInfo.history.splice(0);
             querySnapshot.forEach(doc => {
-                // if (doc.data().membership == 'lite') {
-                //     doc.ref.update({
-                //         spentTime: 300
-                //     });
-                // } else {
-                //     doc.ref.update({
-                //         spentTime: 720
-                //     });
-                // }
-                doc.ref.update({ history: firebase.firestore.FieldValue.arrayRemove(history[0]) })
+                doc.ref.update({ history: [] })
             });
-        }).then(() => console.log('reset all data')).catch((err) => console.log(err));
+        }).catch((err) => console.log(err));
         setDialog(false);
     }
 
-    // 入店時間と退店時間を比較して、トータル時間を計算
-    function countTime(hour, minute) {
-        // Today's date.
-        const dateFrom = dayjs();
-        const dateTo = dayjs().hour(hour).minute(minute);
-        //   Calculate difference between start time and end time.
-        const difference = dateFrom.diff(dateTo, 'minute');
-
-        // the number of the time deference.
-        return new Promise(res => {
-            res(Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference)
-        })
-    }
-
-    const sendDate = (hours, name) => {
-
-        // firestore customer query.
-        const docRef = db.collection('users')
-        const query = docRef.where('name', '==', name);
-
-        // TODO Add a Timestamp date for Today.
-        const time = firebase.firestore.Timestamp.fromDate(new Date("November 8, 1815"))
-
-        // FIXME problem: no matter how date was send, this code return successful result...
-        query.get().then(snapshots => {
-            snapshots.forEach(snapshot => {
-                docRef.doc(snapshot.id).update({ history: firebase.firestore.FieldValue.arrayUnion(hours) });
-            });
-        }).then(() => {
-            // HACK 機能として抜き出す
-            setTimeout(() => {
-                setSucceeded(true)
-                setProcessing(false)
-            }, 1500);
-        }).catch((err) => console.log(err));
-    }
-
-    //  TODO: FIX this function Redo function.
     const redoFunction = () => {
         setProcessing(true)
         db.collection('users').get().then(querySnapshot => {
@@ -125,25 +57,55 @@ const FirebaseStore = ({ data }) => {
         }).catch((err) => console.log(err));
     }
 
-    // Send a reduce time to firestore.
+    // 入店時間と退店時間を比較して、トータル時間を計算
+    // HACK Can I merge this function to submitTime ??
+    function countTime(hour, minute) {
+        // Today's date.
+        const dateFrom = dayjs();
+        const dateTo = dayjs().hour(hour).minute(minute);
+
+        //   Calculate difference between start time and end time.
+        const difference = dateFrom.diff(dateTo, 'minute');
+
+        // the number of the time deference.
+        return new Promise(res => {
+            res(Math.ceil(difference % 60 / 15) * 15 - (difference % 60) + difference)
+        })
+    }
+
+    // FIXME Can't send same hour twice continuously.
     const submitTime = async () => {
         setProcessing(true)
-        // HACK Ommit this valu to React Hooks (reducer)
+
+        // Calculate time difference.
         const submitHours = await countTime(hour, minute);
-        // トータル時間をデータベースに送信する
-        sendDate(submitHours, realTimeUserInfo.name)
+
+        const docRef = db.collection('users')
+        const query = docRef.where('name', '==', realTimeUserInfo.name);
+
+        // HACK Add a Timestamp date for Today.
+        const time = firebase.firestore.Timestamp.fromDate(new Date("November 8, 1815"))
+
+        // FIXME  No matter how date was send, this code return successful result...
+        query.get().then(snapshots => {
+            snapshots.forEach(snapshot => {
+                docRef.doc(snapshot.id).update({ history: firebase.firestore.FieldValue.arrayUnion(submitHours) });
+            });
+        }).then(() => {
+            setTimeout(() => {
+                setSucceeded(true)
+                setProcessing(false)
+            }, 1500);
+        }).catch((err) => console.log(err));
     }
 
 
-    // カスタマーの情報を描画するコンポーネント
+    // Customer's info component.
     const timeManager = (data) => {
-
-        // get total number from history array.
+        // NOTE: 一度読み込んで配列に入っている、顧客情報を読み込んでfirebaseに何度もアクセスしないように設計した。
         if (isLoaded) {
-
             const result = data.history
-
-            // FIXME realtime に変更
+            // TODO show customer's REALTIME DATA!
             // const result = db.collection('users').where('name', '==', data.name).onSnapshot((querySnapshot) => {
 
             //     querySnapshot.docChanges().forEach((change) => {
@@ -153,22 +115,20 @@ const FirebaseStore = ({ data }) => {
             //     })
             //     return totalHours
             // })
-
             let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            return <p>{`残り時間は ${min2hour(data.spentTime - total)}`}</p>
-        } else { return <p>N/a!</p> }
+            return `${min2hour(data.spentTime - total)}`
+        } else { return `N/a` }
 
     }
+
     // Change format of time.
     function min2hour(time) {
         var hour = Math.floor(time / 60);
         var min = time % 60;
-
         return (`${hour} : ${min}`)
     }
 
-    // create new useInfo component
-    // HACK fix error control
+    // HACK fix error handling.
     async function getUserInfo(name) {
         db.collection('users').where('name', '==', name).get().then(snapshot => {
             snapshot.forEach(async doc => {
@@ -197,15 +157,16 @@ const FirebaseStore = ({ data }) => {
         setDialog(false);
     };
     // 登録成功の表示を閉じる
+    // TODO auto fade out submit success banner.
     const handleClose = () => setSucceeded(false)
     // Create User interface.
     return (
         <>
             <h2>{realTimeUserInfo.name}様　本日の滞在時間は　{getTotalTime(hour, minute)}</h2>
 
-            <p>Customer info: </p>
-            {timeManager(realTimeUserInfo)}
-            <h2>来店時間は</h2>
+            <h2>残り時間は {timeManager(realTimeUserInfo)} </h2>
+
+            <p>来店時間は</p>
             <select name="" id=""
                 onChange={(e) => {
                     getUserInfo(e.target.value);
@@ -225,10 +186,6 @@ const FirebaseStore = ({ data }) => {
                 {createMinuteArray(60)}
             </select>
             <br />
-            <div>
-                <p className='totalTime_subTitle'>今日の滞在時間は</p>
-                <h2 className='totalTime_title'> </h2>
-            </div>
             <br />
             <br />
             {processing ? (<CircularProgress />) : (
