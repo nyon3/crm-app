@@ -86,6 +86,7 @@ const FirebaseStore = ({ data }) => {
         // HACK Add a Timestamp date for Today.
         const time = firebase.firestore.Timestamp.fromDate(new Date("November 8, 1815"))
 
+        // Update database value: history
         // FIXME  No matter how date was send, this code return successful result...
         query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
@@ -105,17 +106,22 @@ const FirebaseStore = ({ data }) => {
         // NOTE: 一度読み込んで配列に入っている、顧客情報を読み込んでfirebaseに何度もアクセスしないように設計した。
         if (isLoaded) {
             const result = data.history
-            // TODO show customer's REALTIME DATA!
-            // const result = db.collection('users').where('name', '==', data.name).onSnapshot((querySnapshot) => {
 
-            //     querySnapshot.docChanges().forEach((change) => {
-            //         let totalHours = []
-            //         console.log(change.doc.data().history);
-            //         totalHours.push(change.doc.data().history)
-            //     })
-            //     return totalHours
-            // })
-            let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            // TODO show customer's REALTIME DATA!
+            let userData = [];
+
+            db.collection('users').where('name', '==', data.name)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges()
+                        .forEach((change) => {
+                            if (change.type === 'added') {
+                                userData.push(change.doc.data().history);
+                                console.log("Current userData: ", userData.join(", "));
+                            }
+                        });
+                });
+            let total = userData.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+            console.log(userData);
             return `${min2hour(data.spentTime - total)}`
         } else { return `N/a` }
 
@@ -138,7 +144,6 @@ const FirebaseStore = ({ data }) => {
                 } else {
                     setisLoaded(false)
                     return Promise.reject("No such document");
-
                 }
             })
         })
