@@ -96,35 +96,25 @@ const FirebaseStore = ({ data }) => {
             setTimeout(() => {
                 setSucceeded(true)
                 setProcessing(false)
+
             }, 1500);
         }).catch((err) => console.log(err));
+
     }
 
 
     // Customer's info component.
+
     const timeManager = (data) => {
         // NOTE: 一度読み込んで配列に入っている、顧客情報を読み込んでfirebaseに何度もアクセスしないように設計した。
         if (isLoaded) {
             const result = data.history
 
             // TODO show customer's REALTIME DATA!
-            let userData = [];
 
-            db.collection('users').where('name', '==', data.name)
-                .onSnapshot((snapshot) => {
-                    snapshot.docChanges()
-                        .forEach((change) => {
-                            if (change.type === 'added') {
-                                userData.push(change.doc.data().history);
-                                console.log("Current userData: ", userData.join(", "));
-                            }
-                        });
-                });
-            let total = userData.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            console.log(userData);
+            let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
             return `${min2hour(data.spentTime - total)}`
         } else { return `N/a` }
-
     }
 
     // Change format of time.
@@ -135,18 +125,31 @@ const FirebaseStore = ({ data }) => {
     }
 
     // HACK fix error handling.
-    async function getUserInfo(name) {
-        db.collection('users').where('name', '==', name).get().then(snapshot => {
-            snapshot.forEach(async doc => {
-                if (doc.exists) {
-                    setRealTimeUserInfo(doc.data())
-                    setisLoaded(true)
-                } else {
-                    setisLoaded(false)
-                    return Promise.reject("No such document");
-                }
-            })
-        })
+    function getUserInfo(name) {
+
+        db.collection('users').where('name', '==', name)
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges()
+                    .forEach((change) => {
+                        if (change.type === 'added') {
+                            setRealTimeUserInfo(change.doc.data());
+                            console.log("Get Current user history: ", change.doc.data().history.join(", "));
+                            setisLoaded(true)
+                        }
+                    });
+            });
+
+        // db.collection('users').where('name', '==', name).get().then(snapshot => {
+        //     snapshot.forEach(async doc => {
+        //         if (doc.exists) {
+        //             setRealTimeUserInfo(doc.data())
+        //           c
+        //         } else {
+        //             setisLoaded(false)
+        //             return Promise.reject("No such document");
+        //         }
+        //     })
+        // })
     }
 
     function Alert(props) {
@@ -170,6 +173,7 @@ const FirebaseStore = ({ data }) => {
             <h2>{realTimeUserInfo.name}様　本日の滞在時間は　{getTotalTime(hour, minute)}</h2>
 
             <h2>残り時間は {timeManager(realTimeUserInfo)} </h2>
+
 
             <p>来店時間は</p>
             <select name="" id=""
