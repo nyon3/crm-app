@@ -3,7 +3,7 @@ import 'firebase/firestore'
 import firebase from 'firebase/app'
 import initFirebase from '../utils/auth/initFirebase';
 import dayjs from 'dayjs';
-import { Button } from '@material-ui/core';
+import { Button, ClickAwayListener } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MuiAlert from '@material-ui/lab/Alert';
 import Dialog from '@material-ui/core/Dialog';
@@ -29,21 +29,22 @@ const FirebaseStore = ({ data }) => {
     const [disabled, setDisabled] = useState(true)
     const [isLoaded, setisLoaded] = useState(false)
 
-    function resetAll() {
+    const resetAll = async () => {
         const historyRef = db.collection('users').where('history', '!=', []);
 
-        historyRef.get().then(querySnapshot => {
+        await historyRef.get().then(querySnapshot => {
             // var removedData = realTimeUserInfo.history.splice(0);
             querySnapshot.forEach(doc => {
                 doc.ref.update({ history: [] })
             });
         }).catch((err) => console.log(err));
         setDialog(false);
+        getUserInfo(realTimeUserInfo.name)
     }
 
-    const redoFunction = () => {
+    const redoFunction = async () => {
         setProcessing(true)
-        db.collection('users').get().then(querySnapshot => {
+        await db.collection('users').get().then(querySnapshot => {
             var last = realTimeUserInfo.history.slice(-1)[0];
             querySnapshot.forEach(doc => {
                 doc.ref.update({ history: firebase.firestore.FieldValue.arrayRemove(last) })
@@ -55,6 +56,7 @@ const FirebaseStore = ({ data }) => {
             }, 1500);
             console.log('delete previous date')
         }).catch((err) => console.log(err));
+        getUserInfo(realTimeUserInfo.name)
     }
 
     // 入店時間と退店時間を比較して、トータル時間を計算
@@ -88,7 +90,7 @@ const FirebaseStore = ({ data }) => {
 
         // Update database value: history
         // FIXME  No matter how date was send, this code return successful result...
-        query.get().then(snapshots => {
+        await query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
                 docRef.doc(snapshot.id).update({ history: firebase.firestore.FieldValue.arrayUnion(submitHours) });
             });
@@ -99,7 +101,7 @@ const FirebaseStore = ({ data }) => {
 
             }, 1500);
         }).catch((err) => console.log(err));
-
+      getUserInfo(realTimeUserInfo.name)
     }
 
 
@@ -126,7 +128,6 @@ const FirebaseStore = ({ data }) => {
 
     // HACK fix error handling.
     function getUserInfo(name) {
-
         db.collection('users').where('name', '==', name)
             .onSnapshot((snapshot) => {
                 snapshot.docChanges()
