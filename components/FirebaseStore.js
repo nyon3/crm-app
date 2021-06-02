@@ -92,7 +92,10 @@ const FirebaseStore = ({ data }) => {
         // FIXME  No matter how date was send, this code return successful result...
         await query.get().then(snapshots => {
             snapshots.forEach(snapshot => {
-                docRef.doc(snapshot.id).update({ history: firebase.firestore.FieldValue.arrayUnion(submitHours) });
+                docRef.doc(snapshot.id).update({
+                    history: firebase.firestore.FieldValue.arrayUnion(submitHours),
+                    timeStamp: firebase.firestore.Timestamp.fromDate(new Date())
+                });
             });
         }).then(() => {
             setTimeout(() => {
@@ -101,7 +104,7 @@ const FirebaseStore = ({ data }) => {
 
             }, 1500);
         }).catch((err) => console.log(err));
-      getUserInfo(realTimeUserInfo.name)
+        getUserInfo(realTimeUserInfo.name)
     }
 
 
@@ -139,18 +142,6 @@ const FirebaseStore = ({ data }) => {
                         }
                     });
             });
-
-        // db.collection('users').where('name', '==', name).get().then(snapshot => {
-        //     snapshot.forEach(async doc => {
-        //         if (doc.exists) {
-        //             setRealTimeUserInfo(doc.data())
-        //           c
-        //         } else {
-        //             setisLoaded(false)
-        //             return Promise.reject("No such document");
-        //         }
-        //     })
-        // })
     }
 
     function Alert(props) {
@@ -174,7 +165,7 @@ const FirebaseStore = ({ data }) => {
             <h2>{realTimeUserInfo.name}様　本日の滞在時間は　{getTotalTime(hour, minute)}</h2>
 
             <h2>残り時間は {timeManager(realTimeUserInfo)} </h2>
-
+            {/* <p>最終来店日：{realTimeUserInfo.timeStamp.toDate()}</p> */}
 
             <p>来店時間は</p>
             <select name="" id=""
