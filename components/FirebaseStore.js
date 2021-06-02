@@ -118,7 +118,12 @@ const FirebaseStore = ({ data }) => {
             // TODO show customer's REALTIME DATA!
 
             let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-            return `${min2hour(data.spentTime - total)}`
+            if (data.spentTime - total > 0) {
+                return `${min2hour(data.spentTime - total)}`  
+            } else {
+                return `${min2hour(data.spentTime - total)}`
+            }
+              
         } else { return `N/a` }
     }
 
