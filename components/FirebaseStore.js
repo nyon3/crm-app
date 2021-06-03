@@ -119,11 +119,11 @@ const FirebaseStore = ({ data }) => {
 
             let total = result.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
             if (data.spentTime - total > 0) {
-                return `${min2hour(data.spentTime - total)}`  
+                return `${min2hour(data.spentTime - total)}`
             } else {
                 return `${min2hour(data.spentTime - total)}`
             }
-              
+
         } else { return `N/a` }
     }
 
@@ -167,12 +167,10 @@ const FirebaseStore = ({ data }) => {
     // Create User interface.
     return (
         <>
-            <h2>{realTimeUserInfo.name}様　本日の滞在時間は　{getTotalTime(hour, minute)}</h2>
-
-            <h2>残り時間は {timeManager(realTimeUserInfo)} </h2>
+            <h2>{realTimeUserInfo.name}様</h2>
+            <p>本日の滞在時間は　<strong>{getTotalTime(hour, minute)}</strong></p>
+            <p>残り時間は <strong>{timeManager(realTimeUserInfo)}</strong></p>
             {/* <p>最終来店日：{realTimeUserInfo.timeStamp.toDate()}</p> */}
-
-            <p>来店時間は</p>
             <select name="" id=""
                 onChange={(e) => {
                     getUserInfo(e.target.value);
