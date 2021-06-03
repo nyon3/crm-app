@@ -13,8 +13,25 @@ const fetcher = (url, token) =>
 
 export async function getStaticProps() {
   const memberList = [
-    { id: 1, name: 'Musashi' },
-    { id: 2, name: 'Taro' },
+    { id: 1, name: 'Jun' },
+    { id: 2, name: 'Masaki' },
+    { id: 1, name: 'Akiko' },
+    { id: 1, name: 'Naomi' },
+    { id: 1, name: 'Mickey' },
+    { id: 1, name: 'Seisuke' },
+    { id: 1, name: 'Tsuyoshi' },
+    { id: 1, name: 'Akari' },
+    { id: 1, name: 'Eriko' },
+    { id: 1, name: 'Yukari' },
+    { id: 1, name: 'Noriko' },
+    { id: 1, name: 'Sousuke' },
+    { id: 1, name: 'Takuji' },
+    { id: 1, name: 'Noboru' },
+    { id: 1, name: 'Michiko' },
+    { id: 1, name: 'Kouhei' },
+    { id: 1, name: 'Rekiko' },
+    { id: 1, name: 'Keiko' },
+    { id: 1, name: 'Tomoko' },
   ]
 
   return {
